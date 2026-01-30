@@ -1,0 +1,11 @@
+{
+  "name": "@jsaf/core",
+  "version": "1.0.0",
+  "description": "JSAF core: config, HTTP client, logger, errors, utilities",
+  "license": "ISC",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --test ../../tests/core/**/*.test.js"
+  }
+}

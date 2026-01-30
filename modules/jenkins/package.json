@@ -1,0 +1,14 @@
+{
+  "name": "@jsaf/jenkins",
+  "version": "1.0.0",
+  "description": "JSAF Jenkins automation module",
+  "license": "ISC",
+  "type": "commonjs",
+  "main": "index.js",
+  "dependencies": {
+    "@jsaf/core": "1.0.0"
+  },
+  "scripts": {
+    "test": "node --test ../../tests/jenkins/**/*.test.js"
+  }
+}

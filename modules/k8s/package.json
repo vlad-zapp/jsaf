@@ -1,0 +1,14 @@
+{
+  "name": "@jsaf/k8s",
+  "version": "1.0.0",
+  "description": "JSAF Kubernetes automation module",
+  "license": "ISC",
+  "type": "commonjs",
+  "main": "index.js",
+  "dependencies": {
+    "@jsaf/core": "1.0.0"
+  },
+  "scripts": {
+    "test": "node --test ../../tests/k8s/**/*.test.js"
+  }
+}

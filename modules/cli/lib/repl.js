@@ -1,0 +1,234 @@
+'use strict';
+
+const nodeRepl = require('repl');
+const fs = require('fs');
+const path = require('path');
+const { exec } = require('child_process');
+const { createContext, getCompletions, resolveInfo, formatInfo } = require('@jsaf/core');
+const { startHelpServer } = require('./help-server');
+
+function openBrowser(url) {
+  const cmd = process.platform === 'darwin' ? 'open'
+    : process.platform === 'win32' ? 'start'
+    : 'xdg-open';
+  exec(`${cmd} "${url}"`, () => {});
+}
+
+function startRepl(cliOptions = {}) {
+  const context = createContext({
+    configPath: cliOptions.config,
+    logLevel: cliOptions.logLevel,
+  });
+  let completionsList = getCompletions(context);
+
+  // Start help server (optional — REPL works without it)
+  let helpServer = null;
+  try {
+    helpServer = startHelpServer(context);
+  } catch {
+    // Ignore — docs just won't be available
+  }
+
+  const dumpBuffer = [];
+
+  console.log('JSAF Interactive Shell');
+  console.log('Modules: ' + Object.keys(context).filter((k) => k[0] === k[0].toLowerCase() && k !== 'config' && k !== 'logger' && typeof context[k] === 'object' && context[k] !== null).join(', '));
+  console.log('');
+  console.log('Commands:  .info <path>  .dump <file>  .undo  .buffer  .reload');
+  console.log('Tip: prefix a line with space to exclude it from dump');
+  console.log('');
+
+  const r = nodeRepl.start({
+    prompt: 'jsaf> ',
+    useColors: true,
+    preview: true,
+    breakEvalOnSigint: true,
+    completer: (line) => {
+      // Find the last token being typed (after space, =, (, etc.)
+      const tokens = line.split(/[\s(=,;{[!&|?:]+/);
+      const partial = tokens[tokens.length - 1] || '';
+
+      if (!partial) return [[], line];
+
+      const hits = completionsList.filter((c) => c.startsWith(partial));
+
+      // Show method signature on TAB when exact match
+      const infoTarget = completionsList.includes(partial) ? partial : null;
+
+      if (infoTarget) {
+        const info = resolveInfo(context, infoTarget);
+        if (info && info.type === 'function') {
+          const sig = `${info.path}(${info.params.join(', ')})`;
+          const desc = info.desc ? `  ${info.desc}` : '';
+          process.stdout.write(`\n  ${sig}${desc}\n`);
+          const argKeys = Object.keys(info.argDescs);
+          if (argKeys.length > 0) {
+            const maxLen = Math.max(...argKeys.map((k) => k.length));
+            for (const [arg, adesc] of Object.entries(info.argDescs)) {
+              process.stdout.write(`    ${arg.padEnd(maxLen + 2)} ${adesc}\n`);
+            }
+          }
+          if (helpServer && helpServer.url) {
+            process.stdout.write(`  F1: open docs in browser\n`);
+          }
+        }
+      }
+
+      return [hits.length ? hits : [], partial];
+    },
+  });
+
+  // Print docs URL once server is bound (appears cleanly after first prompt)
+  if (helpServer) {
+    helpServer.onReady((url) => {
+      process.stdout.write(`\nDocs: ${url}  (F1 to open)\n`);
+      r.displayPrompt(true);
+    });
+  }
+
+  // F1: open docs in browser for current input
+  if (helpServer) {
+    process.stdin.on('keypress', (_ch, key) => {
+      if (key && key.name === 'f1' && helpServer.url) {
+        const line = r.line || '';
+        const tokens = line.split(/[\s(=,;{[!&|?:]+/);
+        const partial = tokens[tokens.length - 1] || '';
+
+        let url = helpServer.url;
+        if (partial) {
+          const target = completionsList.includes(partial)
+            ? partial
+            : completionsList.find((c) => c.startsWith(partial)) || '';
+          if (target) url += '#' + target;
+        }
+        openBrowser(url);
+      }
+    });
+  }
+
+  // Inject JSAF context into the REPL context
+  Object.assign(r.context, context);
+
+  // Wrap eval to record commands in dump buffer
+  const originalEval = r.eval;
+  r.eval = function (cmd, evalContext, filename, callback) {
+    const raw = cmd;
+    const startsWithSpace = raw.length > 0 && raw[0] === ' ';
+    const trimmed = raw.replace(/\n$/, '').trim();
+
+    originalEval.call(this, cmd, evalContext, filename, (err, result) => {
+      // Record to dump buffer if:
+      // - No error
+      // - Doesn't start with space (exclusion marker)
+      // - Not empty
+      // - Not a dot-command
+      // - Not just "undefined" output
+      if (!err && !startsWithSpace && trimmed.length > 0 && !trimmed.startsWith('.')) {
+        dumpBuffer.push(trimmed);
+      }
+      callback(err, result);
+    });
+  };
+
+  // .dump command: save session to a script file
+  r.defineCommand('dump', {
+    help: 'Save session commands to a .js file: .dump <filename>',
+    action(filename) {
+      if (!filename || !filename.trim()) {
+        console.log('Usage: .dump <filename.js>');
+        this.displayPrompt();
+        return;
+      }
+      const target = filename.trim();
+      const resolved = path.resolve(target);
+      const lines = [
+        '// Generated by JSAF REPL',
+        '// Run with: jsaf run ' + path.basename(resolved),
+        '',
+        ...dumpBuffer,
+        '',
+      ];
+      fs.writeFileSync(resolved, lines.join('\n'));
+      console.log(`Saved ${dumpBuffer.length} commands to ${resolved}`);
+      this.displayPrompt();
+    },
+  });
+
+  // .undo command: remove last command from dump buffer
+  r.defineCommand('undo', {
+    help: 'Remove last command from dump buffer',
+    action() {
+      if (dumpBuffer.length === 0) {
+        console.log('Dump buffer is empty.');
+      } else {
+        const removed = dumpBuffer.pop();
+        const preview = removed.length > 60 ? removed.slice(0, 60) + '...' : removed;
+        console.log(`Removed: ${preview}`);
+        console.log(`Buffer: ${dumpBuffer.length} commands`);
+      }
+      this.displayPrompt();
+    },
+  });
+
+  // .buffer command: show current dump buffer
+  r.defineCommand('buffer', {
+    help: 'Show current dump buffer',
+    action() {
+      if (dumpBuffer.length === 0) {
+        console.log('(empty)');
+      } else {
+        dumpBuffer.forEach((cmd, i) => {
+          const preview = cmd.length > 80 ? cmd.slice(0, 80) + '...' : cmd;
+          console.log(`  ${String(i + 1).padStart(3)}: ${preview}`);
+        });
+        console.log(`\n  Total: ${dumpBuffer.length} commands`);
+      }
+      this.displayPrompt();
+    },
+  });
+
+  // .info command: show method signatures and descriptions
+  r.defineCommand('info', {
+    help: 'Show method info: .info <path> (e.g. .info docker.containers)',
+    action(input) {
+      const target = (input || '').trim();
+      if (!target) {
+        console.log('Usage: .info <path>');
+        console.log('  .info docker              List all docker methods');
+        console.log('  .info docker.containers   List container methods');
+        console.log('  .info jenkins.jobs.build  Show build() signature');
+        this.displayPrompt();
+        return;
+      }
+      const info = resolveInfo(context, target);
+      console.log(formatInfo(info));
+      this.displayPrompt();
+    },
+  });
+
+  // .reload command: reload config and recreate module instances
+  r.defineCommand('reload', {
+    help: 'Reload config and recreate module instances',
+    action() {
+      const newContext = createContext({
+        configPath: cliOptions.config,
+        logLevel: cliOptions.logLevel,
+      });
+      Object.assign(r.context, newContext);
+      completionsList = getCompletions(newContext);
+      console.log('Config and modules reloaded.');
+      this.displayPrompt();
+    },
+  });
+
+  r.on('exit', () => {
+    if (helpServer) helpServer.stop();
+    if (dumpBuffer.length > 0) {
+      console.log(`\nSession had ${dumpBuffer.length} recorded commands (not saved).`);
+      console.log('Next time, use .dump <file.js> before exiting to save.');
+    }
+    process.exit(0);
+  });
+}
+
+module.exports = { startRepl };

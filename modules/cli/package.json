@@ -1,0 +1,19 @@
+{
+  "name": "@jsaf/cli",
+  "version": "1.0.0",
+  "description": "JSAF command-line interface",
+  "license": "ISC",
+  "type": "commonjs",
+  "main": "index.js",
+  "dependencies": {
+    "@jsaf/core": "1.0.0",
+    "@jsaf/jenkins": "1.0.0",
+    "@jsaf/k8s": "1.0.0",
+    "@jsaf/ssh": "1.0.0",
+    "@jsaf/docker": "1.0.0",
+    "@jsaf/git": "1.0.0"
+  },
+  "scripts": {
+    "test": "node --test ../../tests/cli/**/*.test.js"
+  }
+}

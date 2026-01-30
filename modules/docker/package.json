@@ -1,0 +1,14 @@
+{
+  "name": "@jsaf/docker",
+  "version": "1.0.0",
+  "description": "JSAF Docker automation module",
+  "license": "ISC",
+  "type": "commonjs",
+  "main": "index.js",
+  "dependencies": {
+    "@jsaf/core": "1.0.0"
+  },
+  "scripts": {
+    "test": "node --test ../../tests/docker/**/*.test.js"
+  }
+}

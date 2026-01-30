@@ -1,0 +1,25 @@
+{
+  "name": "jsaf",
+  "version": "1.0.0",
+  "description": "JavaScript Automation Framework for DevOps",
+  "private": true,
+  "license": "ISC",
+  "type": "commonjs",
+  "workspaces": [
+    "modules/*"
+  ],
+  "bin": {
+    "jsaf": "./bin/jsaf.js"
+  },
+  "scripts": {
+    "test": "node --test tests/**/*.test.js",
+    "test:coverage": "c8 node --test tests/**/*.test.js",
+    "test:integration": "JSAF_INTEGRATION=1 node --test tests/integration/**/*.test.js",
+    "build": "node scripts/build.js"
+  },
+  "devDependencies": {
+    "@yao-pkg/pkg": "^6.0.0",
+    "c8": "^9.0.0",
+    "esbuild": "^0.24.0"
+  }
+}
