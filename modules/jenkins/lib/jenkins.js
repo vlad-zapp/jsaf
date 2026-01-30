@@ -91,6 +91,40 @@ class Jenkins extends BaseClient {
     }
   }
 
+  async _rawRequest(method, urlPath, options = {}) {
+    if (!this.auth.user || !this.auth.password) {
+      throw new ConfigError('user/token', 'No Jenkins authentication configured. Set "user" and "token" (or "password") in your config.');
+    }
+    if (['POST', 'PUT', 'DELETE'].includes(method) && !this._crumb) {
+      await this._fetchCrumb();
+    }
+    const headers = { ...this._authHeaders(), ...options.headers };
+    if (this._crumb && this._crumb.field && ['POST', 'PUT', 'DELETE'].includes(method)) {
+      headers[this._crumb.field] = this._crumb.value;
+      if (this._sessionCookie) {
+        headers['Cookie'] = this._sessionCookie;
+      }
+    }
+
+    const url = new URL(urlPath, this.baseUrl);
+    const fetchOpts = {
+      method,
+      headers,
+      signal: AbortSignal.timeout(this.timeout),
+    };
+    if (options.body !== undefined) {
+      fetchOpts.body = options.body;
+    }
+    if (!this.rejectUnauthorized) {
+      process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+    }
+
+    const res = await fetch(url, fetchOpts);
+    const contentType = res.headers.get('content-type') || '';
+    const body = contentType.includes('json') ? await res.json() : await res.text();
+    return { status: res.status, headers: res.headers, body };
+  }
+
   async ping() {
     const data = await this.request('GET', '/api/json?tree=mode,nodeDescription');
     return { mode: data.mode, description: data.nodeDescription };

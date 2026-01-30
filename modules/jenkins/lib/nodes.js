@@ -21,7 +21,7 @@ class JenkinsNodes {
     );
   }
 
-  async offline(name, reason = '') {
+  async setOffline(name, reason = '') {
     const nodeName = name === 'master' || name === 'built-in' ? '(master)' : name;
     const qs = reason ? `?offlineMessage=${encodeURIComponent(reason)}` : '';
     return this.client.request(
@@ -30,7 +30,7 @@ class JenkinsNodes {
     );
   }
 
-  async online(name) {
+  async setOnline(name) {
     const nodeName = name === 'master' || name === 'built-in' ? '(master)' : name;
     return this.client.request(
       'POST',

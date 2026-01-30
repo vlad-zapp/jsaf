@@ -41,7 +41,7 @@ class DockerContainers {
     return this.client.request('DELETE', `/containers/${id}${qs ? '?' + qs : ''}`);
   }
 
-  async logs(id, options = {}) {
+  async getLogs(id, options = {}) {
     const params = new URLSearchParams({
       stdout: 'true',
       stderr: 'true',
@@ -83,18 +83,18 @@ class DockerContainers {
     const { Id } = await this.create(options.name || '', config);
     await this.start(Id);
     await this.client.request('POST', `/containers/${Id}/wait`);
-    const logs = await this.logs(Id);
+    const logs = await this.getLogs(Id);
     if (options.remove !== false) {
       await this.remove(Id);
     }
     return { id: Id, output: logs };
   }
 
-  async stats(id) {
+  async getStats(id) {
     return this.client.request('GET', `/containers/${id}/stats?stream=false`);
   }
 
-  async top(id) {
+  async getTop(id) {
     return this.client.request('GET', `/containers/${id}/top`);
   }
 

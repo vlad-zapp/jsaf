@@ -108,11 +108,11 @@ class Docker {
     return this.request('GET', '/_ping');
   }
 
-  async info() {
+  async getInfo() {
     return this.request('GET', '/info');
   }
 
-  async version() {
+  async getVersion() {
     return this.request('GET', '/version');
   }
 }

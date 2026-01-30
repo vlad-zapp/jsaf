@@ -45,7 +45,7 @@ class DockerImages {
     return this.client.request('DELETE', `/images/${encodeURIComponent(name)}${qs ? '?' + qs : ''}`);
   }
 
-  async history(name) {
+  async getHistory(name) {
     return this.client.request('GET', `/images/${encodeURIComponent(name)}/history`);
   }
 

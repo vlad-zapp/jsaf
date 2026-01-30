@@ -18,14 +18,14 @@ class JenkinsBuilds {
     );
   }
 
-  async latest(jobName) {
+  async getLatest(jobName) {
     return this.client.request(
       'GET',
       `/job/${encodeJobPath(jobName)}/lastBuild/api/json`
     );
   }
 
-  async log(jobName, buildNumber) {
+  async getLog(jobName, buildNumber) {
     return this.client.request(
       'GET',
       `/job/${encodeJobPath(jobName)}/${buildNumber}/consoleText`
@@ -36,6 +36,28 @@ class JenkinsBuilds {
     return this.client.request(
       'POST',
       `/job/${encodeJobPath(jobName)}/${buildNumber}/stop`
+    );
+  }
+
+  async _pollQueueItem(queueId, options = {}) {
+    const interval = options.interval || 2000;
+    const timeout = options.timeout || 60000;
+    const start = Date.now();
+
+    while (Date.now() - start < timeout) {
+      const item = await this.client.request('GET', `/queue/item/${queueId}/api/json`);
+      if (item.cancelled) {
+        throw new JsafError(`Queue item ${queueId} was cancelled`, { queueId });
+      }
+      if (item.executable && item.executable.number) {
+        return item.executable.number;
+      }
+      await new Promise((r) => setTimeout(r, interval));
+    }
+
+    throw new JsafError(
+      `Timeout waiting for queue item ${queueId} to start after ${timeout}ms`,
+      { queueId }
     );
   }
 
@@ -65,4 +87,4 @@ class JenkinsBuilds {
   }
 }
 
-module.exports = { JenkinsBuilds };
+module.exports = { JenkinsBuilds, encodeJobPath };

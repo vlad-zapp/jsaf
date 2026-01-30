@@ -1,0 +1,12 @@
+{
+  "name": "@jsaf/gerrit",
+  "version": "1.0.0",
+  "description": "JSAF Gerrit code review module",
+  "license": "ISC",
+  "type": "commonjs",
+  "main": "index.js",
+  "dependencies": {
+    "@jsaf/core": "1.0.0",
+    "@jsaf/ssh": "1.0.0"
+  }
+}

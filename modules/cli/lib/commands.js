@@ -19,7 +19,7 @@ const user = process.env.USER || 'admin';
 
 module.exports = {
   // Single instance — config has direct values (url, host, etc.)
-  // Available as: jenkins.jobs.list(), jenkins.builds.latest('job')
+  // Available as: jenkins.jobs.list(), jenkins.builds.getLatest('job')
   jenkins: {
     url: 'https://jenkins.example.com',
     user,
@@ -119,7 +119,7 @@ Examples:
   jenkins.jobs.list()                        List all jobs
   jenkins.jobs.build('name', { params })     Trigger build
   jenkins.jobs.get('name')                   Get job details
-  jenkins.jobs.config('name')                Get XML config
+  jenkins.jobs.getConfig('name')             Get XML config
   jenkins.jobs.create('name', xml)           Create job
   jenkins.jobs.delete('name')                Delete job
   jenkins.jobs.enable('name')                Enable job
@@ -128,19 +128,19 @@ Examples:
   jenkins.jobs.copy('src', 'dest')           Copy job
 
   jenkins.builds.get('job', number)          Get build info
-  jenkins.builds.latest('job')               Get last build
-  jenkins.builds.log('job', number)          Console output
+  jenkins.builds.getLatest('job')            Get last build
+  jenkins.builds.getLog('job', number)      Console output
   jenkins.builds.stop('job', number)         Stop build
   jenkins.builds.waitFor('job', num, opts)   Poll until done
 
   jenkins.nodes.list()                       List nodes
-  jenkins.nodes.offline('name', reason)      Take offline
-  jenkins.nodes.online('name')               Bring online
+  jenkins.nodes.setOffline('name', reason)   Take offline
+  jenkins.nodes.setOnline('name')            Bring online
 
   jenkins.groovy.exec(script)                Run Groovy script
   jenkins.groovy.execJson(script)            Run & parse JSON
   jenkins.groovy.listPlugins()               List plugins
-  jenkins.groovy.runningBuilds()             Running builds
+  jenkins.groovy.getRunningBuilds()          Running builds
 
   jenkins.request(method, path, opts)        Raw HTTP request
   jenkins.ping()                             Test connectivity
@@ -153,7 +153,7 @@ Examples:
 
   k8s.pods.list(ns)                          List pods
   k8s.pods.get(name, ns)                     Get pod
-  k8s.pods.logs(name, opts)                  Pod logs
+  k8s.pods.getLogs(name, opts)               Pod logs
   k8s.pods.exec(name, cmd, opts)             Exec in pod
   k8s.pods.delete(name, ns)                  Delete pod
   k8s.pods.wait(name, condition, timeout)    Wait for condition
@@ -162,8 +162,8 @@ Examples:
   k8s.deployments.get(name, ns)              Get deployment
   k8s.deployments.scale(name, n, ns)         Scale replicas
   k8s.deployments.restart(name, ns)          Rollout restart
-  k8s.deployments.status(name, ns)           Rollout status
-  k8s.deployments.image(name, ctr, img, ns)  Set image
+  k8s.deployments.getStatus(name, ns)        Rollout status
+  k8s.deployments.setImage(name, ctr, img, ns)  Set image
   k8s.deployments.undo(name, ns)             Rollback
 
   k8s.services.list(ns)                      List services
@@ -202,9 +202,9 @@ Examples:
   docker.containers.stop(id)                 Stop
   docker.containers.restart(id)              Restart
   docker.containers.remove(id, opts)         Remove
-  docker.containers.logs(id, opts)           Logs
+  docker.containers.getLogs(id, opts)        Logs
   docker.containers.exec(id, cmd)            Exec command
-  docker.containers.stats(id)                Stats
+  docker.containers.getStats(id)             Stats
   docker.containers.pause(id)                Pause
   docker.containers.unpause(id)              Unpause
 
@@ -226,8 +226,8 @@ Examples:
   docker.networks.disconnect(net, ctr)       Disconnect
 
   docker.ping()                              Test connectivity
-  docker.info()                              System info
-  docker.version()                           Docker version
+  docker.getInfo()                           System info
+  docker.getVersion()                        Docker version
 `,
     git: `
 @jsaf/git - Git Automation
@@ -239,17 +239,17 @@ Examples:
   git.pull(remote, branch, opts)             Pull
   git.fetch(remote, opts)                    Fetch
   git.tag(name, opts)                        Create tag
-  git.tags()                                 List tags
+  git.getTags()                              List tags
   git.branch(name, opts)                     Create/list branches
   git.checkout(ref)                          Checkout
   git.merge(branch, opts)                    Merge
-  git.status()                               Status (porcelain)
-  git.log(count)                             Log
-  git.diff(opts)                             Diff
-  git.currentBranch()                        Current branch
+  git.getStatus()                            Status (porcelain)
+  git.getLog(count)                          Log
+  git.getDiff(opts)                          Diff
+  git.getCurrentBranch()                     Current branch
   git.stash(opts)                            Stash
-  git.remotes()                              List remotes
-  git.rev(ref)                               Get commit hash
+  git.getRemotes()                           List remotes
+  git.getRev(ref)                            Get commit hash
   git.clean(opts)                            Clean working dir
 `,
   };

@@ -45,7 +45,7 @@ class K8sDeployments {
     });
   }
 
-  async status(name, namespace) {
+  async getStatus(name, namespace) {
     const deploy = await this.get(name, namespace);
     const s = deploy.status || {};
     return {
@@ -58,7 +58,7 @@ class K8sDeployments {
     };
   }
 
-  async image(name, container, image, namespace) {
+  async setImage(name, container, image, namespace) {
     const path = this.client._path('deployments', name, namespace);
     const patch = {
       spec: {
@@ -75,7 +75,7 @@ class K8sDeployments {
     });
   }
 
-  async history(name, namespace) {
+  async getHistory(name, namespace) {
     const ns = namespace || this.client.namespace;
     const deploy = await this.get(name, ns);
     const uid = deploy.metadata.uid;
@@ -104,7 +104,7 @@ class K8sDeployments {
 
   async undo(name, namespace) {
     const ns = namespace || this.client.namespace;
-    const hist = await this.history(name, ns);
+    const hist = await this.getHistory(name, ns);
     if (hist.length < 2) {
       throw new Error(`No previous revision to roll back to for deployment ${name}`);
     }

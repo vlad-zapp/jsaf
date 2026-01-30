@@ -39,7 +39,7 @@ println(JsonOutput.toJson(__result))
     `);
   }
 
-  async runningBuilds() {
+  async getRunningBuilds() {
     return this.execJson(`
       Jenkins.instance.getAllItems(hudson.model.Job).collectMany { job ->
         job.builds.findAll { it.isBuilding() }.collect { b ->
@@ -49,7 +49,7 @@ println(JsonOutput.toJson(__result))
     `);
   }
 
-  async systemMessage() {
+  async getSystemMessage() {
     const raw = await this.exec('println(Jenkins.instance.systemMessage ?: "")');
     return raw.trim();
   }

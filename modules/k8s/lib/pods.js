@@ -16,7 +16,7 @@ class K8sPods {
     return this.client.request('GET', path);
   }
 
-  async logs(name, options = {}) {
+  async getLogs(name, options = {}) {
     const path = this.client._path('pods', name, options.namespace, 'log');
     const params = new URLSearchParams();
     if (options.container) params.set('container', options.container);
@@ -63,4 +63,4 @@ function parseDuration(since) {
   return num;
 }
 
-module.exports = { K8sPods };
+module.exports = { K8sPods, parseDuration };

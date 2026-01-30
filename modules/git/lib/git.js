@@ -79,7 +79,7 @@ class Git {
     return this.git(args);
   }
 
-  async tags() {
+  async getTags() {
     const { stdout } = await this.git(['tag', '--list']);
     return stdout ? stdout.split('\n') : [];
   }
@@ -108,7 +108,7 @@ class Git {
     return this.git(args);
   }
 
-  async status() {
+  async getStatus() {
     const { stdout } = await this.git(['status', '--porcelain']);
     return stdout
       .split('\n')
@@ -119,7 +119,7 @@ class Git {
       }));
   }
 
-  async log(count = 10) {
+  async getLog(count = 10) {
     const { stdout } = await this.git([
       'log',
       `--max-count=${count}`,
@@ -134,7 +134,7 @@ class Git {
       });
   }
 
-  async diff(options = {}) {
+  async getDiff(options = {}) {
     const args = ['diff'];
     if (options.staged) args.push('--staged');
     if (options.stat) args.push('--stat');
@@ -152,17 +152,17 @@ class Git {
     return this.git(args);
   }
 
-  async currentBranch() {
+  async getCurrentBranch() {
     const { stdout } = await this.git(['rev-parse', '--abbrev-ref', 'HEAD']);
     return stdout;
   }
 
-  async remoteUrl(remote = 'origin') {
+  async getRemoteUrl(remote = 'origin') {
     const { stdout } = await this.git(['remote', 'get-url', remote]);
     return stdout;
   }
 
-  async remotes() {
+  async getRemotes() {
     const { stdout } = await this.git(['remote', '-v']);
     return stdout
       .split('\n')
@@ -185,7 +185,7 @@ class Git {
     return this.git(args);
   }
 
-  async rev(ref = 'HEAD') {
+  async getRev(ref = 'HEAD') {
     const { stdout } = await this.git(['rev-parse', ref]);
     return stdout;
   }

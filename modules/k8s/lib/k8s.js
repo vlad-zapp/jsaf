@@ -273,7 +273,7 @@ class K8s extends BaseClient {
    * Get the Kubernetes cluster version info.
    * Returns { major, minor, gitVersion, platform, ... }.
    */
-  async version() {
+  async getVersion() {
     if (!this._versionCache) {
       this._versionCache = await this.request('GET', '/version');
     }
@@ -284,7 +284,7 @@ class K8s extends BaseClient {
    * Parse major.minor from cached version. Returns [major, minor] as ints.
    */
   async _versionTuple() {
-    const v = await this.version();
+    const v = await this.getVersion();
     const major = parseInt(v.major, 10) || 0;
     const minor = parseInt(String(v.minor).replace(/\D+$/, ''), 10) || 0;
     return [major, minor];

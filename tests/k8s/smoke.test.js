@@ -21,7 +21,7 @@ describe('k8s (live cluster)', () => {
     });
 
     it('version returns cluster version info', async () => {
-      const v = await k8s.version();
+      const v = await k8s.getVersion();
       assert.ok(v.major, 'version should have major');
       assert.ok(v.minor, 'version should have minor');
       assert.ok(v.gitVersion, 'version should have gitVersion');
@@ -29,8 +29,8 @@ describe('k8s (live cluster)', () => {
     });
 
     it('version is cached on second call', async () => {
-      const v1 = await k8s.version();
-      const v2 = await k8s.version();
+      const v1 = await k8s.getVersion();
+      const v2 = await k8s.getVersion();
       assert.strictEqual(v1, v2, 'should return same cached object');
     });
   });
@@ -72,7 +72,7 @@ describe('k8s (live cluster)', () => {
       const pods = await k8s.pods.list('kube-system');
       const running = pods.find((p) => p.status?.phase === 'Running');
       assert.ok(running, 'should have a running pod');
-      const logs = await k8s.pods.logs(running.metadata.name, {
+      const logs = await k8s.pods.getLogs(running.metadata.name, {
         namespace: 'kube-system',
         tail: 5,
       });

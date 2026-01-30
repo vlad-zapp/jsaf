@@ -114,7 +114,7 @@ Prefix a line with a space to exclude it from `.dump` output.
 await jenkins.jobs.list()
 await jenkins.jobs.list('folder/subfolder')
 await jenkins.jobs.build('my-job', { BRANCH: 'main', DEPLOY: 'true' })
-await jenkins.jobs.config('my-job')           // XML config
+await jenkins.jobs.getConfig('my-job')        // XML config
 await jenkins.jobs.create('new-job', xmlStr)
 await jenkins.jobs.delete('old-job')
 await jenkins.jobs.enable('my-job')
@@ -124,16 +124,16 @@ await jenkins.jobs.copy('template-job', 'new-job')
 
 // Builds
 await jenkins.builds.get('my-job', 42)
-await jenkins.builds.latest('my-job')
-await jenkins.builds.log('my-job', 42)        // console output
+await jenkins.builds.getLatest('my-job')
+await jenkins.builds.getLog('my-job', 42)     // console output
 await jenkins.builds.stop('my-job', 42)
 await jenkins.builds.waitFor('my-job', 42, { timeout: 300000 })
 
 // Nodes
 await jenkins.nodes.list()
 await jenkins.nodes.get('agent-01')
-await jenkins.nodes.offline('agent-01', 'maintenance')
-await jenkins.nodes.online('agent-01')
+await jenkins.nodes.setOffline('agent-01', 'maintenance')
+await jenkins.nodes.setOnline('agent-01')
 
 // Credentials
 await jenkins.credentials.list()
@@ -145,8 +145,8 @@ await jenkins.credentials.delete('my-cred-id')
 await jenkins.groovy.exec('println Jenkins.instance.numExecutors')
 await jenkins.groovy.execJson('Jenkins.instance.pluginManager.plugins.size()')
 await jenkins.groovy.listPlugins()
-await jenkins.groovy.runningBuilds()
-await jenkins.groovy.systemMessage()
+await jenkins.groovy.getRunningBuilds()
+await jenkins.groovy.getSystemMessage()
 await jenkins.groovy.quietDown()
 await jenkins.groovy.cancelQuietDown()
 ```
@@ -166,7 +166,7 @@ await k8s.describe('pod', 'my-pod')
 // Pods
 await k8s.pods.list()
 await k8s.pods.get('my-pod')
-await k8s.pods.logs('my-pod', { tail: 100, container: 'app' })
+await k8s.pods.getLogs('my-pod', { tail: 100, container: 'app' })
 await k8s.pods.exec('my-pod', 'ls -la /app')
 await k8s.pods.delete('my-pod')
 await k8s.pods.wait('my-pod', 'Ready', 120)
@@ -176,9 +176,9 @@ await k8s.deployments.list()
 await k8s.deployments.get('my-app')
 await k8s.deployments.scale('my-app', 3)
 await k8s.deployments.restart('my-app')
-await k8s.deployments.status('my-app')
-await k8s.deployments.image('my-app', 'app', 'myapp:v2')
-await k8s.deployments.history('my-app')
+await k8s.deployments.getStatus('my-app')
+await k8s.deployments.setImage('my-app', 'app', 'myapp:v2')
+await k8s.deployments.getHistory('my-app')
 await k8s.deployments.undo('my-app')
 
 // Services, Namespaces, ConfigMaps, Secrets
@@ -193,8 +193,8 @@ await k8s.secrets.create('my-secret', { PASSWORD: 's3cret' })
 ```js
 // System
 await docker.ping()
-await docker.info()
-await docker.version()
+await docker.getInfo()
+await docker.getVersion()
 
 // Containers
 await docker.containers.list()
@@ -206,10 +206,10 @@ await docker.containers.start('abc123')
 await docker.containers.stop('abc123')
 await docker.containers.restart('abc123')
 await docker.containers.remove('abc123', { force: true })
-await docker.containers.logs('abc123', { tail: 50 })
+await docker.containers.getLogs('abc123', { tail: 50 })
 await docker.containers.exec('abc123', 'ps aux')
-await docker.containers.stats('abc123')
-await docker.containers.top('abc123')
+await docker.containers.getStats('abc123')
+await docker.containers.getTop('abc123')
 await docker.containers.rename('abc123', 'new-name')
 await docker.containers.pause('abc123')
 await docker.containers.unpause('abc123')
@@ -220,7 +220,7 @@ await docker.images.pull('nginx', '1.25')
 await docker.images.tag('nginx:1.25', 'myregistry/nginx', 'latest')
 await docker.images.push('myregistry/nginx')
 await docker.images.remove('old-image')
-await docker.images.history('nginx')
+await docker.images.getHistory('nginx')
 await docker.images.search('redis')
 await docker.images.prune()
 
@@ -258,7 +258,7 @@ await ssh.web.close()
 
 ```js
 await git.clone('https://github.com/user/repo.git', './repo')
-await git.status()                             // [{ status, file }]
+await git.getStatus()                          // [{ status, file }]
 await git.add('.')
 await git.commit('fix: resolve login bug')
 await git.push()
@@ -271,15 +271,75 @@ await git.checkout('main')
 await git.merge('feature/new', { noFf: true })
 
 await git.tag('v1.0.0', { message: 'Release 1.0' })
-await git.tags()
-await git.log(5)                               // [{ hash, author, subject, date }]
-await git.diff({ staged: true })
+await git.getTags()
+await git.getLog(5)                            // [{ hash, author, subject, date }]
+await git.getDiff({ staged: true })
 await git.stash()
 await git.stash({ pop: true })
-await git.currentBranch()
-await git.remoteUrl()
-await git.remotes()
-await git.rev('HEAD')
+await git.getCurrentBranch()
+await git.getRemoteUrl()
+await git.getRemotes()
+await git.getRev('HEAD')
+```
+
+### Gerrit
+
+Gerrit module communicates via SSH (port 29418), not REST API.
+
+```js
+// Config
+// gerrit: { host: 'gerrit.example.com', port: 29418, user: 'ci', privateKey: '~/.ssh/id_rsa' }
+
+// Query changes
+await gerrit.changes.query('status:open project:myproject')
+await gerrit.changes.query('owner:self is:open', { currentPatchSet: true, files: true })
+await gerrit.changes.get(12345)                              // single change detail
+
+// Review & approve
+await gerrit.changes.review(12345, 3, {
+  labels: { 'Code-Review': 2, 'Verified': 1 },
+  message: 'LGTM',
+})
+await gerrit.changes.approve(12345, 3)                       // Code-Review +2
+await gerrit.changes.approve(12345, 3, { submit: true })     // +2 and merge
+await gerrit.changes.reject(12345, 3, { message: 'Needs work' })
+await gerrit.changes.verify(12345, 3, 1)                     // Verified +1
+await gerrit.changes.verify(12345, 3, -1)                    // Verified -1
+
+// Merge, abandon, restore, rebase
+await gerrit.changes.submit(12345, 3)
+await gerrit.changes.abandon(12345, 3, 'Superseded by 12346')
+await gerrit.changes.restore(12345, 3)
+await gerrit.changes.rebase(12345, 3)
+
+// Reviewers
+await gerrit.changes.addReviewers(12345, 'alice@example.com', 'bob@example.com')
+await gerrit.changes.removeReviewers(12345, 'alice@example.com')
+await gerrit.changes.setTopic(12345, 'feature-auth')
+
+// Projects
+await gerrit.projects.list()
+await gerrit.projects.list({ match: 'myteam', state: 'ACTIVE' })
+await gerrit.projects.create('new-project', {
+  branch: 'main', emptyCommit: true, description: 'My project',
+})
+await gerrit.projects.createBranch('myproject', 'release-1.0', 'main')
+
+// Groups
+await gerrit.groups.list()
+await gerrit.groups.list({ user: 'alice', verbose: true })
+await gerrit.groups.getMembers('Developers')
+await gerrit.groups.create('My Team', {
+  description: 'Dev team', members: ['alice', 'bob'],
+})
+await gerrit.groups.addMembers('My Team', 'charlie')
+await gerrit.groups.removeMembers('My Team', 'charlie')
+
+// Server info
+await gerrit.getVersion()
+
+// Raw command
+await gerrit.exec('ls-projects --format json')
 ```
 
 ## Configuration

@@ -61,7 +61,7 @@ function createContext(options = {}) {
 
     if (isSingleInstance(moduleConfig)) {
       // Single instance: module variable IS the client
-      // e.g. docker.containers.list(), git.status()
+      // e.g. docker.containers.list(), git.getStatus()
       try {
         context[moduleName] = new ModuleClass(moduleConfig);
       } catch (err) {
