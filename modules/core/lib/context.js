@@ -3,6 +3,8 @@
 const { Config } = require('./config');
 const { Logger } = require('./logger');
 
+const aqLib = require('aq');
+
 // Static require functions so bundlers (esbuild) can trace the imports.
 // Dynamic require(variable) is invisible to bundlers.
 const MODULE_REGISTRY = {
@@ -11,6 +13,7 @@ const MODULE_REGISTRY = {
   ssh: { load: () => require('@jsaf/ssh'), className: 'SSH' },
   docker: { load: () => require('@jsaf/docker'), className: 'Docker' },
   git: { load: () => require('@jsaf/git'), className: 'Git' },
+  gerrit: { load: () => require('@jsaf/gerrit'), className: 'Gerrit' },
 };
 
 /**
@@ -78,6 +81,20 @@ function createContext(options = {}) {
       context[moduleName] = namespace;
     }
   }
+
+  // aq: universal data parsing/encoding + query utilities
+  context.aq = {
+    parse: aqLib.parse,
+    encode: aqLib.encode,
+    tracked: aqLib.tracked,
+    aqFindByLocator: aqLib.aqFindByLocator,
+    aqFindByName: aqLib.aqFindByName,
+    aqFindByFullName: aqLib.aqFindByFullName,
+    aqFindByValue: aqLib.aqFindByValue,
+    aqDiff: aqLib.aqDiff,
+    aqComments: aqLib.aqComments,
+    aqAnchors: aqLib.aqAnchors,
+  };
 
   return context;
 }

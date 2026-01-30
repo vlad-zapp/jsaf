@@ -1,25 +1,36 @@
 'use strict';
 
 class K8sNamespaces {
-  constructor(k8s) {
-    this.k8s = k8s;
+  constructor(client) {
+    this.client = client;
   }
 
   async list() {
-    const data = await this.k8s.kubectlJson(['get', 'namespaces'], { namespace: false });
+    const path = this.client._path('namespaces');
+    const data = await this.client.request('GET', path);
     return data.items;
   }
 
   async get(name) {
-    return this.k8s.kubectlJson(['get', 'namespace', name], { namespace: false });
+    const path = this.client._path('namespaces', name);
+    return this.client.request('GET', path);
   }
 
   async create(name) {
-    return this.k8s.kubectl(['create', 'namespace', name], { namespace: false });
+    const path = this.client._path('namespaces');
+    return this.client.request('POST', path, {
+      body: JSON.stringify({
+        apiVersion: 'v1',
+        kind: 'Namespace',
+        metadata: { name },
+      }),
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   async delete(name) {
-    return this.k8s.kubectl(['delete', 'namespace', name], { namespace: false });
+    const path = this.client._path('namespaces', name);
+    return this.client.request('DELETE', path);
   }
 }
 

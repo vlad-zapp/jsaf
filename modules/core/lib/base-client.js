@@ -11,6 +11,7 @@ class BaseClient {
     this.retries = config.retries ?? 0;
     this.retryDelay = config.retryDelay || 1000;
     this.rejectUnauthorized = config.rejectUnauthorized ?? true;
+    this._dispatcher = config.dispatcher || null;
     this.logger = config.logger || new Logger(config.logLevel || 'info');
   }
 
@@ -28,6 +29,10 @@ class BaseClient {
 
     if (options.body !== undefined) {
       fetchOpts.body = options.body;
+    }
+
+    if (this._dispatcher) {
+      fetchOpts.dispatcher = this._dispatcher;
     }
 
     if (!this.rejectUnauthorized) {

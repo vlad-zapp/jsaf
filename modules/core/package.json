@@ -5,6 +5,9 @@
   "license": "ISC",
   "type": "commonjs",
   "main": "index.js",
+  "dependencies": {
+    "aq": "github:vlad-zapp/aq"
+  },
   "scripts": {
     "test": "node --test ../../tests/core/**/*.test.js"
   }

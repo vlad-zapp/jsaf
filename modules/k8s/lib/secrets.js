@@ -1,29 +1,42 @@
 'use strict';
 
 class K8sSecrets {
-  constructor(k8s) {
-    this.k8s = k8s;
+  constructor(client) {
+    this.client = client;
   }
 
   async list(namespace) {
-    const data = await this.k8s.kubectlJson(['get', 'secrets'], { namespace });
+    const path = this.client._path('secrets', null, namespace);
+    const data = await this.client.request('GET', path);
     return data.items;
   }
 
   async get(name, namespace) {
-    return this.k8s.kubectlJson(['get', 'secret', name], { namespace });
+    const path = this.client._path('secrets', name, namespace);
+    return this.client.request('GET', path);
   }
 
   async create(name, data = {}, namespace) {
-    const args = ['create', 'secret', 'generic', name];
+    const encoded = {};
     for (const [key, value] of Object.entries(data)) {
-      args.push(`--from-literal=${key}=${value}`);
+      encoded[key] = Buffer.from(String(value)).toString('base64');
     }
-    return this.k8s.kubectl(args, { namespace });
+    const path = this.client._path('secrets', null, namespace);
+    return this.client.request('POST', path, {
+      body: JSON.stringify({
+        apiVersion: 'v1',
+        kind: 'Secret',
+        metadata: { name },
+        type: 'Opaque',
+        data: encoded,
+      }),
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   async delete(name, namespace) {
-    return this.k8s.kubectl(['delete', 'secret', name], { namespace });
+    const path = this.client._path('secrets', name, namespace);
+    return this.client.request('DELETE', path);
   }
 }
 

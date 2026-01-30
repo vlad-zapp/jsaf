@@ -52,41 +52,47 @@ const DOCS = {
   },
 
   k8s: {
-    'kubectl': { desc: 'Run a raw kubectl command', args: { args: 'Array of kubectl arguments', options: 'Exec options' }, returns: '{ stdout, stderr }' },
-    'kubectlJson': { desc: 'Run kubectl with -o json and parse result', args: { args: 'Array of kubectl arguments', options: 'Exec options' }, returns: 'object' },
-    'apply': { desc: 'Apply a manifest file or YAML string', args: { manifest: 'File path or YAML content', options: 'Apply options' }, returns: '{ stdout, stderr }' },
-    'delete': { desc: 'Delete a resource', args: { resource: 'Resource type (pod, svc, etc.)', name: 'Resource name', options: '{ namespace }' }, returns: '{ stdout, stderr }' },
-    'get': { desc: 'Get a resource as JSON', args: { resource: 'Resource type', name: 'Resource name', options: '{ namespace }' }, returns: 'object' },
-    'describe': { desc: 'Describe a resource', args: { resource: 'Resource type', name: 'Resource name', options: '{ namespace }' }, returns: 'string' },
+    'ping': { desc: 'Test connectivity to the Kubernetes cluster', returns: 'object' },
+    'version': { desc: 'Get cluster version info (cached)', returns: '{ major, minor, gitVersion, platform }' },
+    'request': { desc: 'Raw HTTP request to the Kubernetes API', args: {
+      method: 'HTTP method (GET, POST, PUT, PATCH, DELETE)',
+      urlPath: 'API endpoint path',
+      options: 'Request options (body, headers, etc.)',
+    }, returns: 'object | string' },
+    'get': { desc: 'Get a single resource by type and name', args: { resource: 'Resource type (pods, deployments, etc.)', name: 'Resource name', options: '{ namespace }' }, returns: 'object' },
+    'list': { desc: 'List resources of a given type', args: { resource: 'Resource type', options: '{ namespace, labelSelector, fieldSelector }' }, returns: 'object (with .items)' },
+    'delete': { desc: 'Delete a resource', args: { resource: 'Resource type', name: 'Resource name', options: '{ namespace, force }' }, returns: 'object' },
+    'apply': { desc: 'Apply a manifest (server-side apply on 1.16+, create-or-update fallback)', args: { manifest: 'Manifest object, YAML/JSON string, or file path', options: '{ namespace, fieldManager, force }' }, returns: 'object' },
+    'describe': { desc: 'Get resource details with related events', args: { resource: 'Resource type', name: 'Resource name', options: '{ namespace }' }, returns: '{ resource, events }' },
     'pods.list': { desc: 'List pods', args: { namespace: 'Namespace (default: from config)' }, returns: 'object[]' },
     'pods.get': { desc: 'Get pod details', args: { name: 'Pod name', namespace: 'Namespace' }, returns: 'object' },
-    'pods.logs': { desc: 'Get pod logs', args: { name: 'Pod name', options: '{ container, follow, tail, since }' }, returns: 'string' },
-    'pods.exec': { desc: 'Execute command in a pod', args: { name: 'Pod name', command: 'Command string or array', options: '{ container, namespace }' }, returns: 'string' },
-    'pods.delete': { desc: 'Delete a pod', args: { name: 'Pod name', namespace: 'Namespace' }, returns: '{ stdout, stderr }' },
-    'pods.wait': { desc: 'Wait for pod condition', args: { name: 'Pod name', condition: 'Ready, Completed, etc.', timeout: 'Seconds', namespace: 'Namespace' }, returns: '{ stdout, stderr }' },
+    'pods.logs': { desc: 'Get pod logs', args: { name: 'Pod name', options: '{ container, previous, tail, since, namespace }' }, returns: 'string' },
+    'pods.exec': { desc: 'Not implemented (requires WebSocket)', returns: 'throws Error' },
+    'pods.delete': { desc: 'Delete a pod', args: { name: 'Pod name', namespace: 'Namespace' }, returns: 'object' },
+    'pods.wait': { desc: 'Wait for pod condition', args: { name: 'Pod name', condition: 'Ready, Completed, etc.', timeout: 'Seconds (default: 120)', namespace: 'Namespace' }, returns: 'object (pod)' },
     'deployments.list': { desc: 'List deployments', args: { namespace: 'Namespace' }, returns: 'object[]' },
     'deployments.get': { desc: 'Get deployment details', args: { name: 'Deployment name', namespace: 'Namespace' }, returns: 'object' },
-    'deployments.scale': { desc: 'Scale a deployment', args: { name: 'Deployment name', replicas: 'Number of replicas', namespace: 'Namespace' }, returns: '{ stdout, stderr }' },
-    'deployments.restart': { desc: 'Rollout restart', args: { name: 'Deployment name', namespace: 'Namespace' }, returns: '{ stdout, stderr }' },
-    'deployments.status': { desc: 'Rollout status', args: { name: 'Deployment name', namespace: 'Namespace' }, returns: 'string' },
-    'deployments.image': { desc: 'Update container image', args: { name: 'Deployment', container: 'Container name', image: 'New image:tag', namespace: 'Namespace' }, returns: '{ stdout, stderr }' },
-    'deployments.history': { desc: 'Rollout history', args: { name: 'Deployment name', namespace: 'Namespace' }, returns: 'string' },
-    'deployments.undo': { desc: 'Rollback deployment', args: { name: 'Deployment name', namespace: 'Namespace' }, returns: '{ stdout, stderr }' },
+    'deployments.scale': { desc: 'Scale a deployment', args: { name: 'Deployment name', replicas: 'Number of replicas', namespace: 'Namespace' }, returns: 'object' },
+    'deployments.restart': { desc: 'Rollout restart', args: { name: 'Deployment name', namespace: 'Namespace' }, returns: 'object' },
+    'deployments.status': { desc: 'Get deployment rollout status', args: { name: 'Deployment name', namespace: 'Namespace' }, returns: '{ replicas, readyReplicas, updatedReplicas, availableReplicas, conditions, ready }' },
+    'deployments.image': { desc: 'Update container image', args: { name: 'Deployment', container: 'Container name', image: 'New image:tag', namespace: 'Namespace' }, returns: 'object' },
+    'deployments.history': { desc: 'Get rollout history', args: { name: 'Deployment name', namespace: 'Namespace' }, returns: '{ revision, name, replicas, image, createdAt }[]' },
+    'deployments.undo': { desc: 'Rollback to previous revision', args: { name: 'Deployment name', namespace: 'Namespace' }, returns: 'object' },
     'services.list': { desc: 'List services', args: { namespace: 'Namespace' }, returns: 'object[]' },
     'services.get': { desc: 'Get service details', args: { name: 'Service name', namespace: 'Namespace' }, returns: 'object' },
-    'services.delete': { desc: 'Delete a service', args: { name: 'Service name', namespace: 'Namespace' }, returns: '{ stdout, stderr }' },
+    'services.delete': { desc: 'Delete a service', args: { name: 'Service name', namespace: 'Namespace' }, returns: 'object' },
     'namespaces.list': { desc: 'List all namespaces', returns: 'object[]' },
     'namespaces.get': { desc: 'Get namespace details', args: { name: 'Namespace name' }, returns: 'object' },
-    'namespaces.create': { desc: 'Create a namespace', args: { name: 'Namespace name' }, returns: '{ stdout, stderr }' },
-    'namespaces.delete': { desc: 'Delete a namespace', args: { name: 'Namespace name' }, returns: '{ stdout, stderr }' },
+    'namespaces.create': { desc: 'Create a namespace', args: { name: 'Namespace name' }, returns: 'object' },
+    'namespaces.delete': { desc: 'Delete a namespace', args: { name: 'Namespace name' }, returns: 'object' },
     'configmaps.list': { desc: 'List configmaps', args: { namespace: 'Namespace' }, returns: 'object[]' },
     'configmaps.get': { desc: 'Get configmap', args: { name: 'ConfigMap name', namespace: 'Namespace' }, returns: 'object' },
-    'configmaps.create': { desc: 'Create configmap', args: { name: 'ConfigMap name', data: 'Key-value data object', namespace: 'Namespace' }, returns: '{ stdout, stderr }' },
-    'configmaps.delete': { desc: 'Delete configmap', args: { name: 'ConfigMap name', namespace: 'Namespace' }, returns: '{ stdout, stderr }' },
+    'configmaps.create': { desc: 'Create configmap', args: { name: 'ConfigMap name', data: 'Key-value data object', namespace: 'Namespace' }, returns: 'object' },
+    'configmaps.delete': { desc: 'Delete configmap', args: { name: 'ConfigMap name', namespace: 'Namespace' }, returns: 'object' },
     'secrets.list': { desc: 'List secrets', args: { namespace: 'Namespace' }, returns: 'object[]' },
     'secrets.get': { desc: 'Get secret', args: { name: 'Secret name', namespace: 'Namespace' }, returns: 'object' },
-    'secrets.create': { desc: 'Create secret', args: { name: 'Secret name', data: 'Key-value data object', namespace: 'Namespace' }, returns: '{ stdout, stderr }' },
-    'secrets.delete': { desc: 'Delete secret', args: { name: 'Secret name', namespace: 'Namespace' }, returns: '{ stdout, stderr }' },
+    'secrets.create': { desc: 'Create secret (values auto-base64-encoded)', args: { name: 'Secret name', data: 'Key-value data object', namespace: 'Namespace' }, returns: 'object' },
+    'secrets.delete': { desc: 'Delete secret', args: { name: 'Secret name', namespace: 'Namespace' }, returns: 'object' },
   },
 
   ssh: {
@@ -169,6 +175,137 @@ const DOCS = {
     'remotes': { desc: 'List remote repositories', returns: '{ name, url, type }[]' },
     'clean': { desc: 'Remove untracked files', args: { options: '{ force, directories, ... }' }, returns: '{ stdout, stderr }' },
     'rev': { desc: 'Get commit hash for a ref', args: { ref: 'Branch, tag, HEAD, etc.' }, returns: 'string' },
+  },
+
+  aq: {
+    'parse': { desc: 'Parse a string into a JS object (auto-detects format)', args: {
+      input: 'Input string (JSON, YAML, XML, TOML, INI)',
+      format: 'Format name (optional, auto-detects if omitted)',
+    }, returns: 'object' },
+    'encode': { desc: 'Serialize a JS object to a string in the given format', args: {
+      data: 'JS object to serialize',
+      format: 'Output format: json, yaml, xml, toml, ini',
+    }, returns: 'string' },
+    'tracked': { desc: 'Wrap object in Proxy for chain-based comment/anchor manipulation', args: {
+      obj: 'Object to wrap',
+    }, returns: 'Proxy' },
+    'aqFindByLocator': { desc: 'Find values using a custom locator function', args: {
+      locator: '(parent, name, value) => boolean',
+      root: 'Root object to search (optional)',
+    }, returns: '{ path, value }[]' },
+    'aqFindByName': { desc: 'Find by property name (regex pattern)', args: {
+      locator: 'Regex pattern string',
+    }, returns: '{ path, value }[]' },
+    'aqFindByFullName': { desc: 'Find by full dotted path (regex pattern)', args: {
+      locator: 'Regex pattern string',
+    }, returns: '{ path, value }[]' },
+    'aqFindByValue': { desc: 'Find by string value (regex pattern)', args: {
+      locator: 'Regex pattern string',
+    }, returns: '{ path, value }[]' },
+    'aqDiff': { desc: 'Compare multiple objects and highlight differences', args: {
+      '...objects': 'Two or more objects to compare',
+    }, returns: 'object (diff tree)' },
+    'aqComments': { desc: 'Get comment metadata from a parsed object', args: {
+      key: 'Property name (optional, returns all if omitted)',
+    }, returns: 'CommentMap | CommentEntry | undefined' },
+    'aqAnchors': { desc: 'Get anchor/alias metadata from a parsed YAML object', args: {
+      key: 'Property name (optional, returns all if omitted)',
+    }, returns: 'AnchorMap | AnchorEntry | undefined' },
+  },
+
+  gerrit: {
+    'exec': { desc: 'Run a raw gerrit SSH command', args: { cmd: 'Gerrit command string' }, returns: 'string' },
+    'version': { desc: 'Get Gerrit server version', returns: 'string' },
+    'close': { desc: 'Close the SSH connection', returns: 'void' },
+    'changes.query': { desc: 'Search changes', args: {
+      q: 'Query string (Gerrit search syntax)',
+      options: '{ currentPatchSet, patchSets, files, comments, commitMessage, allApprovals, allReviewers, limit, start }',
+    }, returns: 'object[]' },
+    'changes.get': { desc: 'Get a single change by ID', args: {
+      changeId: 'Change number or Change-Id',
+      options: 'Query options (same as query)',
+    }, returns: 'object | null' },
+    'changes.review': { desc: 'Set labels and add review comment', args: {
+      change: 'Change number',
+      patchSet: 'Patch set number',
+      options: '{ labels: { Name: score }, message, notify, submit, tag }',
+    }, returns: 'void' },
+    'changes.approve': { desc: 'Approve with Code-Review +2', args: {
+      change: 'Change number',
+      patchSet: 'Patch set number',
+      options: '{ message, submit }',
+    }, returns: 'void' },
+    'changes.reject': { desc: 'Reject with Code-Review -2', args: {
+      change: 'Change number',
+      patchSet: 'Patch set number',
+      options: '{ message }',
+    }, returns: 'void' },
+    'changes.verify': { desc: 'Set Verified label', args: {
+      change: 'Change number',
+      patchSet: 'Patch set number',
+      score: '+1 or -1 (default: +1)',
+    }, returns: 'void' },
+    'changes.submit': { desc: 'Submit (merge) a change', args: {
+      change: 'Change number',
+      patchSet: 'Patch set number',
+    }, returns: 'void' },
+    'changes.abandon': { desc: 'Abandon a change', args: {
+      change: 'Change number',
+      patchSet: 'Patch set number',
+      message: 'Reason (optional)',
+    }, returns: 'void' },
+    'changes.restore': { desc: 'Restore an abandoned change', args: {
+      change: 'Change number',
+      patchSet: 'Patch set number',
+      message: 'Comment (optional)',
+    }, returns: 'void' },
+    'changes.rebase': { desc: 'Rebase a change', args: {
+      change: 'Change number',
+      patchSet: 'Patch set number',
+    }, returns: 'void' },
+    'changes.addReviewers': { desc: 'Add reviewers to a change', args: {
+      change: 'Change number',
+      reviewers: 'Email(s) or username(s)',
+    }, returns: 'void' },
+    'changes.removeReviewers': { desc: 'Remove reviewers from a change', args: {
+      change: 'Change number',
+      reviewers: 'Email(s) or username(s)',
+    }, returns: 'void' },
+    'changes.setTopic': { desc: 'Set topic on a change', args: {
+      change: 'Change number',
+      topic: 'Topic string',
+    }, returns: 'void' },
+    'projects.list': { desc: 'List projects', args: {
+      options: '{ match, prefix, type, state, description, limit, start }',
+    }, returns: 'object' },
+    'projects.create': { desc: 'Create a project', args: {
+      name: 'Project name',
+      options: '{ branch, parent, description, submitType, emptyCommit, owner, permissionsOnly }',
+    }, returns: 'void' },
+    'projects.createBranch': { desc: 'Create a branch in a project', args: {
+      project: 'Project name',
+      branch: 'Branch name',
+      revision: 'Base revision or branch',
+    }, returns: 'void' },
+    'groups.list': { desc: 'List groups', args: {
+      options: '{ project, user, owned, verbose }',
+    }, returns: 'string[] | object[]' },
+    'groups.members': { desc: 'List group members', args: {
+      group: 'Group name',
+      options: '{ recursive }',
+    }, returns: '{ id, username, full_name, email }[]' },
+    'groups.create': { desc: 'Create a group', args: {
+      name: 'Group name',
+      options: '{ owner, description, members, visibleToAll }',
+    }, returns: 'void' },
+    'groups.addMembers': { desc: 'Add members to a group', args: {
+      group: 'Group name',
+      members: 'Username(s) to add',
+    }, returns: 'void' },
+    'groups.removeMembers': { desc: 'Remove members from a group', args: {
+      group: 'Group name',
+      members: 'Username(s) to remove',
+    }, returns: 'void' },
   },
 };
 

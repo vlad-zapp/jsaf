@@ -6,7 +6,8 @@
   "type": "commonjs",
   "main": "index.js",
   "dependencies": {
-    "@jsaf/core": "1.0.0"
+    "@jsaf/core": "1.0.0",
+    "undici": "^7.0.0"
   },
   "scripts": {
     "test": "node --test ../../tests/k8s/**/*.test.js"

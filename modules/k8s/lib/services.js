@@ -1,21 +1,24 @@
 'use strict';
 
 class K8sServices {
-  constructor(k8s) {
-    this.k8s = k8s;
+  constructor(client) {
+    this.client = client;
   }
 
   async list(namespace) {
-    const data = await this.k8s.kubectlJson(['get', 'services'], { namespace });
+    const path = this.client._path('services', null, namespace);
+    const data = await this.client.request('GET', path);
     return data.items;
   }
 
   async get(name, namespace) {
-    return this.k8s.kubectlJson(['get', 'service', name], { namespace });
+    const path = this.client._path('services', name, namespace);
+    return this.client.request('GET', path);
   }
 
   async delete(name, namespace) {
-    return this.k8s.kubectl(['delete', 'service', name], { namespace });
+    const path = this.client._path('services', name, namespace);
+    return this.client.request('DELETE', path);
   }
 }
 

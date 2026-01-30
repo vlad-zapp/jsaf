@@ -1,29 +1,37 @@
 'use strict';
 
 class K8sConfigMaps {
-  constructor(k8s) {
-    this.k8s = k8s;
+  constructor(client) {
+    this.client = client;
   }
 
   async list(namespace) {
-    const data = await this.k8s.kubectlJson(['get', 'configmaps'], { namespace });
+    const path = this.client._path('configmaps', null, namespace);
+    const data = await this.client.request('GET', path);
     return data.items;
   }
 
   async get(name, namespace) {
-    return this.k8s.kubectlJson(['get', 'configmap', name], { namespace });
+    const path = this.client._path('configmaps', name, namespace);
+    return this.client.request('GET', path);
   }
 
   async create(name, data = {}, namespace) {
-    const args = ['create', 'configmap', name];
-    for (const [key, value] of Object.entries(data)) {
-      args.push(`--from-literal=${key}=${value}`);
-    }
-    return this.k8s.kubectl(args, { namespace });
+    const path = this.client._path('configmaps', null, namespace);
+    return this.client.request('POST', path, {
+      body: JSON.stringify({
+        apiVersion: 'v1',
+        kind: 'ConfigMap',
+        metadata: { name },
+        data,
+      }),
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   async delete(name, namespace) {
-    return this.k8s.kubectl(['delete', 'configmap', name], { namespace });
+    const path = this.client._path('configmaps', name, namespace);
+    return this.client.request('DELETE', path);
   }
 }
 
