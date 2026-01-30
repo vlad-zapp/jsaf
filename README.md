@@ -315,9 +315,28 @@ JSAF_JENKINS_URL=https://jenkins.prod.com jsaf
 JSAF_JENKINS_TOKEN=abc123 jsaf run deploy.js
 ```
 
-### Multiple Instances
+### Single vs Multiple Instances
 
-Configure multiple instances of any module:
+Each module can be configured as either a **single instance** or **multiple named instances**. JSAF detects which mode you want automatically based on the shape of your config object.
+
+**Single instance** — config keys are direct settings (strings, numbers, booleans):
+
+```js
+module.exports = {
+  jenkins: {
+    url: 'https://jenkins.example.com',
+    user: 'admin',
+    token: process.env.JENKINS_TOKEN,
+  },
+};
+```
+
+```
+jsaf> await jenkins.jobs.list()
+jsaf> await jenkins.builds.get('my-job', 42)
+```
+
+**Multiple instances** — every config key is a named object, each representing a separate instance:
 
 ```js
 module.exports = {
@@ -328,7 +347,34 @@ module.exports = {
 };
 ```
 
-Access as `jenkins.staging.jobs.list()` and `jenkins.prod.jobs.list()`.
+```
+jsaf> await jenkins.staging.jobs.list()
+jsaf> await jenkins.prod.builds.get('deploy', 5)
+```
+
+The detection rule is simple: if any value in the module config is a primitive (string, number, boolean, null, or array), it's treated as a single instance. If every value is a plain object, each one becomes a named instance. This applies to all modules — Jenkins, K8s, Docker, SSH, and Git.
+
+You can mix modes across modules. For example, a single Jenkins but multiple SSH hosts:
+
+```js
+module.exports = {
+  jenkins: {
+    url: 'https://jenkins.example.com',
+    user: 'admin',
+    token: process.env.JENKINS_TOKEN,
+  },
+  ssh: {
+    web: { host: '10.0.1.10', user: 'deploy', privateKeyPath: '~/.ssh/id_rsa' },
+    db:  { host: '10.0.1.20', user: 'deploy', privateKeyPath: '~/.ssh/id_rsa' },
+  },
+};
+```
+
+```
+jsaf> await jenkins.jobs.list()          // single instance — direct access
+jsaf> await ssh.web.exec('uptime')       // multi instance — access by name
+jsaf> await ssh.db.exec('pg_isready')
+```
 
 ## CLI Reference
 
