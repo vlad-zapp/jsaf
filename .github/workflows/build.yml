@@ -3,12 +3,15 @@ name: Build
 on:
   push:
     branches: [master]
+    tags: ['v*']
   pull_request:
     branches: [master]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
@@ -55,3 +58,25 @@ jobs:
         with:
           name: jsaf-win-x64
           path: artifacts/win-x64/jsaf.exe
+
+      - name: Package release archives
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          cd artifacts
+          tar czf jsaf-linux-x64.tar.gz -C linux-x64 jsaf
+          tar czf jsaf-macos-x64.tar.gz -C macos-x64 jsaf
+          tar czf jsaf-macos-arm64.tar.gz -C macos-arm64 jsaf
+          cd win-x64 && zip -q ../jsaf-win-x64.zip jsaf.exe && cd ..
+
+      - name: Create release
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            artifacts/jsaf-linux-x64.tar.gz \
+            artifacts/jsaf-macos-x64.tar.gz \
+            artifacts/jsaf-macos-arm64.tar.gz \
+            artifacts/jsaf-win-x64.zip \
+            --title "JSAF $GITHUB_REF_NAME" \
+            --generate-notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
