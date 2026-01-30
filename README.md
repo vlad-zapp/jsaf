@@ -1,6 +1,6 @@
 # JSAF
 
-JavaScript Automation Framework for DevOps. Interactive REPL and script runner for Jenkins, Kubernetes, Docker, SSH, and Git.
+JavaScript Automation Framework for DevOps. Interactive REPL and script runner for Jenkins, Kubernetes, Docker, SSH, Git, and Gerrit.
 
 ## Quick Start
 
@@ -47,6 +47,12 @@ module.exports = {
   },
   git: {
     cwd: '/opt/repos/myapp',
+  },
+  gerrit: {
+    host: 'gerrit.example.com',
+    port: 29418,
+    user: 'ci',
+    privateKey: '~/.ssh/id_rsa',
   },
 };
 ```
@@ -417,7 +423,7 @@ jsaf> await jenkins.staging.jobs.list()
 jsaf> await jenkins.prod.builds.get('deploy', 5)
 ```
 
-The detection rule is simple: if any value in the module config is a primitive (string, number, boolean, null, or array), it's treated as a single instance. If every value is a plain object, each one becomes a named instance. This applies to all modules — Jenkins, K8s, Docker, SSH, and Git.
+The detection rule is simple: if any value in the module config is a primitive (string, number, boolean, null, or array), it's treated as a single instance. If every value is a plain object, each one becomes a named instance. This applies to all modules — Jenkins, K8s, Docker, SSH, Git, and Gerrit.
 
 You can mix modes across modules. For example, a single Jenkins but multiple SSH hosts:
 

@@ -85,6 +85,7 @@ Modules:
   ssh       Remote command execution and file transfer
   docker    Docker container and image management
   git       Git repository operations
+  gerrit    Gerrit code review automation (SSH)
 
 REPL Commands:
   .dump <file.js>    Save session to a script file
@@ -255,6 +256,37 @@ Examples:
   git.getRemotes()                           List remotes
   git.getRev(ref)                            Get commit hash
   git.clean(opts)                            Clean working dir
+`,
+    gerrit: `
+@jsaf/gerrit - Gerrit Code Review Automation (SSH)
+
+  gerrit.changes.query(q, opts)              Search changes
+  gerrit.changes.get(changeId, opts)         Get single change
+  gerrit.changes.review(change, ps, opts)    Set labels and comment
+  gerrit.changes.approve(change, ps, opts)   Code-Review +2
+  gerrit.changes.reject(change, ps, opts)    Code-Review -2
+  gerrit.changes.verify(change, ps, score)   Set Verified label
+  gerrit.changes.submit(change, ps)          Submit (merge)
+  gerrit.changes.abandon(change, ps, msg)    Abandon change
+  gerrit.changes.restore(change, ps, msg)    Restore change
+  gerrit.changes.rebase(change, ps)          Rebase change
+  gerrit.changes.addReviewers(change, ...)   Add reviewers
+  gerrit.changes.removeReviewers(change, ..) Remove reviewers
+  gerrit.changes.setTopic(change, topic)     Set topic
+
+  gerrit.projects.list(opts)                 List projects
+  gerrit.projects.create(name, opts)         Create project
+  gerrit.projects.createBranch(proj, br, rev) Create branch
+
+  gerrit.groups.list(opts)                   List groups
+  gerrit.groups.getMembers(group, opts)      Get group members
+  gerrit.groups.create(name, opts)           Create group
+  gerrit.groups.addMembers(group, members)   Add members
+  gerrit.groups.removeMembers(group, members) Remove members
+
+  gerrit.getVersion()                        Server version
+  gerrit.exec(cmd)                           Raw gerrit SSH command
+  gerrit.close()                             Close SSH connection
 `,
   };
 
