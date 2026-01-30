@@ -23,34 +23,35 @@ jobs:
       - name: Bundle and build binaries
         run: npm run build
 
-      - name: Package archives
+      - name: Prepare artifacts
         run: |
-          cd dist
-          cp jsaf-linux-x64 jsaf && chmod +x jsaf && tar czf jsaf-linux-x64.tar.gz jsaf && rm jsaf
-          cp jsaf-macos-x64 jsaf && chmod +x jsaf && tar czf jsaf-macos-x64.tar.gz jsaf && rm jsaf
-          cp jsaf-macos-arm64 jsaf && chmod +x jsaf && tar czf jsaf-macos-arm64.tar.gz jsaf && rm jsaf
-          cp jsaf-win-x64.exe jsaf.exe && zip -q jsaf-win-x64.zip jsaf.exe && rm jsaf.exe
+          mkdir -p artifacts/linux-x64 artifacts/macos-x64 artifacts/macos-arm64 artifacts/win-x64
+          cp dist/jsaf-linux-x64 artifacts/linux-x64/jsaf
+          cp dist/jsaf-macos-x64 artifacts/macos-x64/jsaf
+          cp dist/jsaf-macos-arm64 artifacts/macos-arm64/jsaf
+          cp dist/jsaf-win-x64.exe artifacts/win-x64/jsaf.exe
+          chmod +x artifacts/linux-x64/jsaf artifacts/macos-x64/jsaf artifacts/macos-arm64/jsaf
 
       - name: Upload Linux x64
         uses: actions/upload-artifact@v4
         with:
           name: jsaf-linux-x64
-          path: dist/jsaf-linux-x64.tar.gz
+          path: artifacts/linux-x64/jsaf
 
       - name: Upload macOS x64
         uses: actions/upload-artifact@v4
         with:
           name: jsaf-macos-x64
-          path: dist/jsaf-macos-x64.tar.gz
+          path: artifacts/macos-x64/jsaf
 
       - name: Upload macOS ARM64
         uses: actions/upload-artifact@v4
         with:
           name: jsaf-macos-arm64
-          path: dist/jsaf-macos-arm64.tar.gz
+          path: artifacts/macos-arm64/jsaf
 
       - name: Upload Windows x64
         uses: actions/upload-artifact@v4
         with:
           name: jsaf-win-x64
-          path: dist/jsaf-win-x64.zip
+          path: artifacts/win-x64/jsaf.exe
