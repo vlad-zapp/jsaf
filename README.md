@@ -86,8 +86,9 @@ const jobs = await jenkins.jobs.list();
 const running = jobs.filter(j => j.color === 'blue_anime');
 console.log('Running builds:', running.map(j => j.name));
 
-await jenkins.jobs.build('my-app', { BRANCH: 'main' });
-const build = await jenkins.builds.waitFor('my-app', 'lastBuild');
+const { job, number, url } = await jenkins.jobs.build('my-app', { BRANCH: 'main' });
+console.log('Build started:', url);
+const build = await jenkins.builds.waitFor(job, number);
 console.log('Result:', build.result);
 
 await ssh.web.exec('systemctl restart myapp');
@@ -113,8 +114,12 @@ Prefix a line with a space to exclude it from `.dump` output.
 // Jobs
 await jenkins.jobs.list()
 await jenkins.jobs.list('folder/subfolder')
-await jenkins.jobs.build('my-job', { BRANCH: 'main', DEPLOY: 'true' })
+await jenkins.jobs.build('my-job', { BRANCH: 'main', DEPLOY: 'true' })  // { job, number, url }
+await jenkins.jobs.buildAndWait('my-job', { BRANCH: 'main' })           // completed build object
 await jenkins.jobs.getConfig('my-job')        // XML config
+await jenkins.jobs.setConfig('my-job', xml)   // update XML config
+await jenkins.jobs.getPipeline('my-job')      // Groovy script
+await jenkins.jobs.setPipeline('my-job', script) // update Groovy script
 await jenkins.jobs.create('new-job', xmlStr)
 await jenkins.jobs.delete('old-job')
 await jenkins.jobs.enable('my-job')

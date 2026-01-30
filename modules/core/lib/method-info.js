@@ -13,10 +13,11 @@ const DOCS = {
     }, returns: 'object | string' },
     'jobs.list': { desc: 'List all jobs', args: { folder: 'Folder path (optional)' }, returns: '{ name, color, url }[]' },
     'jobs.get': { desc: 'Get job details', args: { name: 'Job name or folder/path' }, returns: 'object' },
-    'jobs.build': { desc: 'Trigger a build', args: {
+    'jobs.build': { desc: 'Trigger a build and wait for it to start', args: {
       name: 'Job name or folder/path',
       params: 'Build parameters { KEY: value }',
-    }, returns: '{ triggered, job }' },
+      options: '{ timeout, interval } in ms',
+    }, returns: '{ job, number, url }' },
     'jobs.buildAndWait': { desc: 'Trigger a build and wait for completion', args: {
       name: 'Job name or folder/path',
       params: 'Build parameters { KEY: value }',

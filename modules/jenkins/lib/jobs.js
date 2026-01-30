@@ -32,12 +32,30 @@ class JenkinsJobs {
     return this.client.request('GET', `/job/${encodeJobPath(name)}/api/json`);
   }
 
-  async build(name, params = {}) {
+  async build(name, params = {}, options = {}) {
     const hasParams = Object.keys(params).length > 0;
     const endpoint = hasParams ? 'buildWithParameters' : 'build';
     const qs = hasParams ? '?' + new URLSearchParams(params).toString() : '';
-    await this.client.request('POST', `/job/${encodeJobPath(name)}/${endpoint}${qs}`);
-    return { triggered: true, job: name };
+
+    const { status, headers } = await this.client._rawRequest(
+      'POST',
+      `/job/${encodeJobPath(name)}/${endpoint}${qs}`
+    );
+
+    if (status < 200 || status >= 400) {
+      throw new JsafError(`Failed to trigger build for ${name} (HTTP ${status})`, { name, status });
+    }
+
+    const location = headers.get('location') || '';
+    const match = location.match(/\/queue\/item\/(\d+)/);
+    if (!match) {
+      throw new JsafError(`No queue item URL in response for ${name}`, { name, location });
+    }
+
+    const queueId = parseInt(match[1], 10);
+    const number = await this.client.builds._pollQueueItem(queueId, options);
+    const url = `${this.client.baseUrl}/job/${encodeJobPath(name)}/${number}/`;
+    return { job: name, number, url };
   }
 
   async getConfig(name) {
@@ -84,28 +102,8 @@ class JenkinsJobs {
   }
 
   async buildAndWait(name, params = {}, options = {}) {
-    const hasParams = Object.keys(params).length > 0;
-    const endpoint = hasParams ? 'buildWithParameters' : 'build';
-    const qs = hasParams ? '?' + new URLSearchParams(params).toString() : '';
-
-    const { status, headers } = await this.client._rawRequest(
-      'POST',
-      `/job/${encodeJobPath(name)}/${endpoint}${qs}`
-    );
-
-    if (status < 200 || status >= 400) {
-      throw new JsafError(`Failed to trigger build for ${name} (HTTP ${status})`, { name, status });
-    }
-
-    const location = headers.get('location') || '';
-    const match = location.match(/\/queue\/item\/(\d+)/);
-    if (!match) {
-      throw new JsafError(`No queue item URL in response for ${name}`, { name, location });
-    }
-
-    const queueId = parseInt(match[1], 10);
-    const buildNumber = await this.client.builds._pollQueueItem(queueId, options);
-    return this.client.builds.waitFor(name, buildNumber, options);
+    const { job, number } = await this.build(name, params, options);
+    return this.client.builds.waitFor(job, number, options);
   }
 
   async setConfig(name, xmlConfig) {

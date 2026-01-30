@@ -117,9 +117,13 @@ Examples:
 
   // Auto-imported in scripts and REPL (no require needed)
   jenkins.jobs.list()                        List all jobs
-  jenkins.jobs.build('name', { params })     Trigger build
+  jenkins.jobs.build('name', { params })     Trigger build, returns { job, number, url }
+  jenkins.jobs.buildAndWait('name', params)  Trigger and wait for completion
   jenkins.jobs.get('name')                   Get job details
   jenkins.jobs.getConfig('name')             Get XML config
+  jenkins.jobs.setConfig('name', xml)        Set XML config
+  jenkins.jobs.getPipeline('name')           Get pipeline Groovy script
+  jenkins.jobs.setPipeline('name', script)   Set pipeline Groovy script
   jenkins.jobs.create('name', xml)           Create job
   jenkins.jobs.delete('name')                Delete job
   jenkins.jobs.enable('name')                Enable job
