@@ -1,0 +1,35 @@
+name: Build
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Bundle and build binaries
+        run: npm run build
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: jsaf-binaries
+          path: |
+            dist/jsaf-linux-x64
+            dist/jsaf-macos-arm64
+            dist/jsaf-macos-x64
+            dist/jsaf-win-x64.exe
+          retention-days: 30
